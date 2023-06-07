@@ -1,1 +1,1 @@
-# WordAssociatorProj
+# Word Associator
