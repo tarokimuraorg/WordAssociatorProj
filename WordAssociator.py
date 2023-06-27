@@ -1,10 +1,10 @@
-import copy
 import csv
 import random
 from collections import Counter
 import numpy
-import ErrorMessageBuilder
+from numpy.random import rand
 from Flashcard import Flashcard
+import ErrorMessageBuilder
 
 class WordAssociator:
 
@@ -17,56 +17,53 @@ class WordAssociator:
             csv_file_path = f'csv/{csv_file_name}'
             self._flashcards = self.__create_data(csv_file_path)
 
-    def output(self, first_word : str = '', number_of_branches: int = 10000) -> list[str]:
+    def output(self, first_word : str = '', limit: int = 100) -> list[str]:
 
-        stem = []
-        branches = []
+        chain = []
 
         if len(first_word) > 0:
 
-            stem.append(first_word)
+            chain = self.__create_chain([first_word], limit)
 
         else:
 
             words = list(map(lambda card: card.head_word, self._flashcards))
             index = random.randint(0, len(words) - 1)
-            stem.append(words[index])
+            chain = self.__create_chain([words[index]], limit)
 
-        branches.append(stem)
+        return chain
 
-        print('----------------------------------------------------')
-        print('-------------the processing was started-------------')
-        print('----------------------------------------------------')
+    def __create_chain(self, chain: list[str], limit: int) -> list[str]:
+        
+        new_word = self.__next_word(chain)
 
-        for branch in branches:
+        if len(new_word) > 0 and len(chain) < limit:
 
-            new_words = self.__next_words(branch)
+            chain.append(new_word)
 
-            for new_word in new_words:
-
-                new_branch = list(copy.deepcopy(branch))
-                new_branch.append(new_word)
-                branches.append(new_branch)
-
-            print(f'now thinking... : {len(branches)}')
-
-            if len(branches) > number_of_branches:
-                break
-
-        print('-----------------------------------------------------')
-        print('-------------the processing was finished-------------')
-        print('-----------------------------------------------------')
-        print()
-
-        number_of_elements = list(map(lambda branch: len(branch), branches))
-
-        return branches[numpy.argmax(number_of_elements)]
-
-    def __next_words(self, words : list[str]) -> list[str]:
+            return self.__create_chain(chain, limit)
+        
+        return chain
+    
+    def __next_word(self, words : list[str]) -> str:
 
         matched_cards = list(filter(lambda card: card.head_word == words[-1], self._flashcards))
 
-        return list(map(lambda card: card.tail_word, matched_cards))
+        if len(matched_cards) == 0:
+
+            print(ErrorMessageBuilder.message(
+                                                'WordAssociator', \
+                                                'next_word', \
+                                                'Output Error', \
+                                                f'No matched generator for "{words[-1]}".'
+                                             ))
+            
+            return ''
+        
+        probs = [c.weight for c in matched_cards]
+        weight_list = rand(len(matched_cards)) * probs
+
+        return matched_cards[numpy.argmax(weight_list)].tail_word
 
     def __create_data(self, csv_file_path : str) -> list[Flashcard]:
 
