@@ -11,37 +11,39 @@ class WordAssociator:
     def __init__(self, csv_file_name : str):
 
         self._flashcards = []
+        self._length = 0
 
         if csv_file_name.endswith('.csv'):
 
             csv_file_path = f'csv/{csv_file_name}'
             self._flashcards = self.__create_data(csv_file_path)
 
-    def output(self, first_word : str = '', limit: int = 100) -> list[str]:
+    def output(self, first_word : str = '', length: int = 100) -> list[str]:
 
+        self._length = length
         chain = []
 
         if len(first_word) > 0:
 
-            chain = self.__create_chain([first_word], limit)
+            chain = self.__create_chain([first_word])
 
         else:
 
             words = list(map(lambda card: card.head_word, self._flashcards))
             index = random.randint(0, len(words) - 1)
-            chain = self.__create_chain([words[index]], limit)
+            chain = self.__create_chain([words[index]])
 
         return chain
 
-    def __create_chain(self, chain: list[str], limit: int) -> list[str]:
+    def __create_chain(self, chain: list[str]) -> list[str]:
         
         new_word = self.__next_word(chain)
 
-        if len(new_word) > 0 and len(chain) < limit:
+        if len(new_word) > 0 and len(chain) < self._length:
 
             chain.append(new_word)
 
-            return self.__create_chain(chain, limit)
+            return self.__create_chain(chain)
         
         return chain
     
@@ -51,12 +53,12 @@ class WordAssociator:
 
         if len(matched_cards) == 0:
 
-            print(ErrorMessageBuilder.message(
-                                                'WordAssociator', \
-                                                'next_word', \
-                                                'Output Error', \
-                                                f'No matched generator for "{words[-1]}".'
-                                             ))
+            # print(ErrorMessageBuilder.message(
+            #                                     'WordAssociator', \
+            #                                     'next_word', \
+            #                                     'Output Error', \
+            #                                     f'No matched generator for "{words[-1]}".'
+            #                                  ))
             
             return ''
         
